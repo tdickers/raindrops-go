@@ -23,7 +23,7 @@ func main() {
 
 		for _, s := range sockets {
 
-			// filter by sport to identify ones for our particular socket
+			// TODO filter by sport to identify ones for our particular socket
 			if s.Inode == 0 {
 			//	log.Infof("Inode 0: %+v", s)
 			// time_wait is also counted so maybe need to filter by state
