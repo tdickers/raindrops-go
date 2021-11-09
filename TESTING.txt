@@ -1,0 +1,27 @@
+tc qdisc add dev eth0 root netem delay 100ms
+tc qdisc change dev eth0 root netem delay 1000ms
+tc qdisc change dev eth0 root netem delay 100ms 10ms # random +/- 10
+tc filter add dev eth0 parent 1:0 protocol ip pref 55 handle ::55 u32 match ip dst 1.2.3.4 flowid 2:1 # filtering possible
+
+watch ss -ln
+watch ss -n state syn-recv sport = :80
+
+export DOCKER_BUILDKIT=1; make run
+
+docker exec -ti raindrops-go ncat -lk 80
+docker exec -ti raindrops-go ncat -lk -m 100 -d 22 80 -c 'xargs -n1 echo'
+docker exec -ti raindrops-go ncat -lk -m 100 -d 4s 80 -c 'echo -e "HTTP/1.1 200 OK\n\n $(date)"'
+
+nc localhost 8080
+
+for i in {1..50}; do nc localhost 8080 -d -w 15 & ; done
+
+wrk2 -t 200 -c 200 -d30s --timeout 2s --latency -R1000 http://localhost:8080
+
+ulimit -n 2048
+
+netstat -nat | awk '{print $6}' | sort | uniq -c | sort -n
+---
+Accept shows as having size 10. Sometimes queued is higher though? 
+
+Also, count connections by state
